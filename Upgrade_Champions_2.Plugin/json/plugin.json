@@ -1,0 +1,123 @@
+{
+    "cards": [
+        {
+            "id": "StarterFireStarter",
+            "override": true,
+            "cost": 0,
+            "names": {
+                "english": "Gas Cannister",
+                "french": "Le Starter of Fire"
+            },
+            "descriptions": {
+                "english": "Deal [effect0.power] damage",
+                "french": "Inflige <nobr>[effect0.power] DGT</nobr>"
+            },
+            "card_art_reference": "@Gasoline",
+            "effects": [
+                {
+                    "id": "@DealSevenDamage"
+                }
+            ],
+            "traits": [
+                {
+                    "id": "@Exhaust"
+                }
+            ]
+        }
+    ],
+    "traits": [
+        {
+            "id": "Exhaust",
+            "name": "CardTraitExhaustState",
+            "track_type": "subtype_in_deck",
+            "card_type_target": "any",
+            "entry_duration": "this_turn",
+            "param_str": "",
+            "param_description": "",
+            "param_int": 0,
+            "param_int_2": 0,
+            "param_int_3": 0,
+            "param_float": 0.0,
+            "param_subtype": "SubtypesData_None",
+            "param_use_scaling_params": false,
+            "param_bool": true,
+            "trait_is_removable": false,
+            "tooltip_suppressed": false,
+            "effect_text_suppressed": false,
+            "status_effect_tooltips_suppressed": false,
+            "param_status_effects": [],
+            "param_team": "None",
+            "stack_mode": "None",
+            "draw_in_deployment_phase": false
+        }
+    ],
+    "sprites": [
+        {
+            "id": "Gasoline",
+            "path": "textures/gas.png"
+        }
+    ],
+    "game_objects": [
+        {
+            "id": "Gasoline",
+            "type": "card_art",
+            "sprite": "@Gasoline"
+        }
+    ],
+    "effects": [
+        {
+            "id": "DealSevenDamage",
+            "name": "CardEffectDamage",
+            "target_mode": "drop_target_character",
+            "supress_pyre_room_focus": false,
+            "status_effect_filters": [],
+            "target_mode_health_filter": "both",
+            "target_ignore_bosses": false,
+            "filter_on_main_subclass": false,
+            "copy_modifiers": false,
+            "ignore_temporary_modifiers": false,
+            "target_team": "both",
+            "target_subtype": "SubtypesData_None",
+            "target_card_type": "spell",
+            "target_selection_mode": "choose_to_hand",
+            "anim_to_play": "none",
+            "show_pyre_notification": false,
+            "should_test": true,
+            "cancel_subsequent_effects_on_failure": false,
+            "fail_to_cast_on_failure": false,
+            "skip_subsequent_previews": false,
+            "use_int_range": false,
+            "param_int": 5,
+            "param_int_2": 0,
+            "param_int_3": 0,
+            "param_str": "",
+            "param_bool": false,
+            "param_bool_2": false,
+            "param_subtype": "SubtypesData_None",
+            "param_min_int": 0,
+            "param_max_int": 0,
+            "param_multiplier": 1,
+            "use_status_effect_multiplier": false,
+            "status_effect_multipler": "",
+            "use_health_missing_multipler": false,
+            "use_magic_power_multipler": false,
+            "param_character_data": "",
+            "param_character_data_2": "",
+            "param_character_data_pool": [],
+            "param_room_data": "",
+            "param_card_pool": "",
+            "param_card_filer": "",
+            "param_trigger": "on_death",
+            "param_status_effects": [],
+            "param_upgrade_data": "",
+            "param_timing_delays": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            "param_card_data": "",
+            "hide_tooltip": false,
+            "additional_tooltips": []
+        }
+    ]
+}
