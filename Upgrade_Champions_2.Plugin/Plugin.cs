@@ -32,19 +32,19 @@ namespace Upgrade_Champions_2.Plugin
             // Plugin startup logic
             Logger = base.Logger;
 
-            var builder = Railhead.GetBuilder();
-            builder.Configure(
-                MyPluginInfo.PLUGIN_GUID,
-                c =>
-                {
-                    // Be sure to include all of your json files if you add more.
-                    // Be sure to update the project configuration if you include more folders
-                    //   the project only copies json files in the json folder and not in subdirectories.
-                    c.AddMergedJsonFile(
-                        "json/plugin.json"
-                    );
-                }
-            );
+            // var builder = Railhead.GetBuilder();
+            // builder.Configure(
+            //     MyPluginInfo.PLUGIN_GUID,
+            //     c =>
+            //     {
+            //         // Be sure to include all of your json files if you add more.
+            //         // Be sure to update the project configuration if you include more folders
+            //         //   the project only copies json files in the json folder and not in subdirectories.
+            //         c.AddMergedJsonFile(
+            //             "json/plugin.json"
+            //         );
+            //     }
+            // );
 
             Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
             
