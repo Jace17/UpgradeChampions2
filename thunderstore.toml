@@ -6,7 +6,7 @@ namespace = "GravitonGamer"
 name = "Upgrade Champions 2"
 versionNumber = "1.0.1"
 description = "A mod for Monster Train 2 that lets you upgrade champion cards just like other unit cards."
-websiteUrl = "https://thunderstore.io"
+websiteUrl = "https://github.com/Jace17/UpgradeChampions2"
 containsNsfwContent = false
 
 [package.dependencies]
