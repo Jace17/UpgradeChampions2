@@ -1,6 +1,6 @@
 # Upgrade Champions 2
 
-A mod for Monster Train 2 that lets you use upgrade champion cards just like other unit cards.
+A mod for Monster Train 2 that lets you upgrade champion cards just like other unit cards.
 
 # Features
 
