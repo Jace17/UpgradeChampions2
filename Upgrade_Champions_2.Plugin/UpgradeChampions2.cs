@@ -174,7 +174,7 @@ namespace UpgradeChampions2
                         {
                             continue;
                         }
-                        else if (cardUpgradeMaskData.GetName() == "OnlyEquipment" || cardUpgradeMaskData.GetName() == "OnlySpells")
+                        else if (cardUpgradeMaskData.GetName() == "OnlyEquipment" || cardUpgradeMaskData.GetName() == "OnlySpells" || cardUpgradeMaskData.GetName() == "OnlyEquipment_EquipmentMerge")
                         {
                             addCardToResult = false;
                             break;
