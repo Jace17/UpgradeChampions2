@@ -2,11 +2,6 @@
 using BepInEx.Logging;
 using HarmonyLib;
 using ShinyShoe;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace UpgradeChampions2
 {
@@ -30,19 +25,18 @@ namespace UpgradeChampions2
     public class AddChampionCardsToUpgradeList
     {
         public static readonly ManualLogSource Log = BepInEx.Logging.Logger.CreateLogSource("AddChampionCardsToUpgradeList");
-        public static void Postfix(SaveManager ___saveManager, DeckScreen.Mode ___mode, CardState ___forceExcludeCard, CardType ___cardTypeFilter, bool ___ignoreUpgradeLimit,
-            GrantableRewardData.Source ___rewardSource, AllGameData ___allGameData, RelicManager ___relicManager, object ___cardUpgradesToApply, CardUpgradeMaskData ___cardUpgradeMaskData,
-            bool ___excludeFilteredOutCards, object ___defaultFilters, ref List<CardState> __result)
+        public static void Postfix(SaveManager ___saveManager, DeckScreen.Mode ___mode, RelicEffectData ___relicEffectData, object ___cardUpgradesToApply, CardUpgradeMaskData ___cardUpgradeMaskData, List<CardState> __result,
+             CardState ___forceExcludeCard, CardType ___cardTypeFilter, bool ___ignoreUpgradeLimit, GrantableRewardData.Source ___rewardSource, RelicManager ___relicManager, bool ___excludeFilteredOutCards)
         {
             if (___mode == DeckScreen.Mode.ApplyUpgrade || ___mode == DeckScreen.Mode.SpellMergeSelection)
             {
-                Log.LogInfo("Adding champion cards to upgrade list...");
+                Log.LogInfo($"Adding champion cards to upgrade list for mode: {___mode}...");
 
                 // Get all champion cards in deck
                 List<CardState> championCards = new List<CardState>(___saveManager.GetDeckState());
-                championCards = (from x in championCards
+                championCards = [.. (from x in championCards
                                  where x.IsChampionCard()
-                                 select x).ToList<CardState>();
+                                 select x)];
 
                 // No champion cards in deck, do nothing
                 if (championCards.IsNullOrEmpty())
@@ -50,47 +44,74 @@ namespace UpgradeChampions2
                     Log.LogInfo("No champion cards found.");
                     return;
                 }
-                else
-                {
-                    Log.LogInfo($"Champion cards found: {string.Join(", ", championCards.Select(c => c.GetAssetName()))}");
-                }
 
-                var deckScreenType = AccessTools.Inner(typeof(DeckScreen), "CardUpgradesToApply");
-                List<CardUpgradeData> upgradeDatas = ___cardUpgradesToApply == null ? null : AccessTools.Field(deckScreenType, "UpgradeDatas").GetValue(___cardUpgradesToApply) as List<CardUpgradeData>;
-                List<CardUpgradeMaskData> cardUpgradeMaskDatas = new List<CardUpgradeMaskData>();
-
-                if (upgradeDatas.IsNullOrEmpty())
+                // Filter by relic effect
+                if (___relicEffectData != null)
                 {
-                    Log.LogInfo("No upgrade datas found.");
-                }
-                else
-                {
-                    foreach (CardUpgradeData upgradeData in upgradeDatas)
+                    Log.LogInfo($"Filtering by relic effect data...");
+                    if (___relicEffectData.GetParamCardType() != CardType.Invalid)
                     {
-                        Log.LogInfo($"Found upgrade data: {upgradeData.GetUpgradeTitleKey().LocalizeEnglish()}");
-                        if (!upgradeData.GetFilters().IsNullOrEmpty())
+                        championCards.RemoveAll((CardState c) => c.GetCardType() != ___relicEffectData.GetParamCardType());
+                    }
+                    if (!___relicEffectData.GetParamCharacterSubtype().IsNone)
+                    {
+                        for (int i = championCards.Count - 1; i >= 0; i--)
                         {
-                            Log.LogInfo($"Found {upgradeData.GetFilters().Count} filters for upgrade data: {upgradeData.GetUpgradeTitleKey().LocalizeEnglish()}");
-                            cardUpgradeMaskDatas.AddRange(upgradeData.GetFilters());
+                            foreach (CardEffectState cardEffectState in championCards[i].GetEffectStates())
+                            {
+                                if (cardEffectState.GetCardEffect() is CardEffectSpawnMonster && !cardEffectState.GetParamCharacterData().GetSubtypes().Contains(___relicEffectData.GetParamCharacterSubtype()))
+                                {
+                                    championCards.RemoveAt(i);
+                                }
+                            }
                         }
-                        else
+                    }
+                    if (___relicEffectData.GetUseIntRange())
+                    {
+                        championCards.RemoveAll((CardState c) => c.GetCostWithoutAnyModifications() < ___relicEffectData.GetParamMinInt() || c.GetCostWithoutAnyModifications() > ___relicEffectData.GetParamMaxInt());
+                    }
+                }
+
+                // No champion cards in deck, do nothing
+                if (championCards.IsNullOrEmpty())
+                {
+                    Log.LogInfo("No champion cards left after checking relic effect data.");
+                    return;
+                }
+
+
+                // Get filters from upgrade data
+                List<CardUpgradeMaskData> cardUpgradeMaskDatas = [];
+                if (___cardUpgradesToApply != null)
+                {
+                    List<CardUpgradeData> upgradeDatas = (List<CardUpgradeData>)Traverse.Create(___cardUpgradesToApply).Field("UpgradeDatas").GetValue();
+                    if (!upgradeDatas.IsNullOrEmpty())
+                    {
+                        foreach (CardUpgradeData upgradeData in upgradeDatas)
                         {
-                            Log.LogInfo($"No filters found for upgrade data: {upgradeData.GetUpgradeTitleKey().LocalizeEnglish()}");
+                            Log.LogInfo($"Found upgrade data: {upgradeData.Cheat_GetNameEnglish()} ({upgradeData.GetDebugName()}).");
+                            cardUpgradeMaskDatas.AddRange(upgradeData.GetFilters());
                         }
                     }
                 }
 
-                if (___cardUpgradeMaskData == null)
+                // Get filter from deck screen
+                if (___cardUpgradeMaskData != null)
                 {
-                    Log.LogInfo("Card upgrade mask data is null.");
-                }
-                else
-                {
-                    Log.LogInfo($"Found card upgrade mask data: {___cardUpgradeMaskData.GetName()}");
                     cardUpgradeMaskDatas.Add(___cardUpgradeMaskData);
                 }
 
-                // Add champion cards to upgrade list
+                // Log all the collected filters
+                if (!cardUpgradeMaskDatas.IsNullOrEmpty())
+                {
+                    Log.LogInfo($"Found {cardUpgradeMaskDatas.Count} filter(s) to check :");
+                    foreach (CardUpgradeMaskData cardUpgradeMaskData in cardUpgradeMaskDatas)
+                    {
+                        Log.LogInfo($"{cardUpgradeMaskData.name}");
+                    }
+                }
+
+                // Validate each card and then add them to result if they passed
                 foreach (CardState card in championCards)
                 {
                     // Check if card is already in the upgrade list
@@ -100,10 +121,10 @@ namespace UpgradeChampions2
                         continue;
                     }
 
-                    // Check if card is excluded from upgrade
-                    if (___forceExcludeCard != null && ___forceExcludeCard.GetID() == card.GetID())
+                    // Check if force exclued
+                    if (___forceExcludeCard == card)
                     {
-                        Log.LogInfo($"Card {card.GetAssetName()} is excluded from this ugprade, skipping.");
+                        Log.LogInfo($"Card {card.GetAssetName()} is force excluded, skipping.");
                         continue;
                     }
 
@@ -113,99 +134,72 @@ namespace UpgradeChampions2
                         Log.LogInfo($"Card {card.GetAssetName()} does not match the card type filter {___cardTypeFilter}, skipping.");
                         continue;
                     }
-                    else
-                    {
-                        card.CurrentDisabledReason = CardState.UpgradeDisabledReason.NONE;
-                    }
+                    card.CurrentDisabledReason = CardState.UpgradeDisabledReason.NONE;
 
-                    // Check if card is eligible for upgrade based on upgrade slots and relic effects
+                    // Check if card is eligible for upgrade based on upgrade slots
                     if (!___ignoreUpgradeLimit && ___rewardSource != GrantableRewardData.Source.Event)
                     {
-                        List<IModifyCardUpgradeSlotCountRelicEffect> relicEffects;
-                        using (GenericPools.GetList<IModifyCardUpgradeSlotCountRelicEffect>(out relicEffects))
+                        using (GenericPools.GetList<IModifyCardUpgradeSlotCountRelicEffect>(out List<IModifyCardUpgradeSlotCountRelicEffect> relicEffects))
                         {
                             int visibleUpgradeCount = card.GetVisibleUpgradeCount();
-                            BalanceData balanceData = ___allGameData.GetBalanceData();
-                            CardState cardState2 = card;
-                            RelicManager relicManager = ___relicManager;
-                            if (visibleUpgradeCount >= balanceData.GetUpgradeSlots(cardState2, (relicManager != null) ? relicManager.GetRelicEffects<IModifyCardUpgradeSlotCountRelicEffect>(relicEffects) : null, ___relicManager))
+                            int maximumUpgradeCount = ___saveManager.GetBalanceData().GetUpgradeSlots(card, (___relicManager != null) ? ___relicManager.GetRelicEffects<IModifyCardUpgradeSlotCountRelicEffect>(relicEffects) : null, ___relicManager);
+                            if (visibleUpgradeCount >= maximumUpgradeCount)
                             {
-                                Log.LogInfo($"Card {card.GetAssetName()} has reached the maximum upgrade slots ({visibleUpgradeCount}).");
-                                if (___excludeFilteredOutCards)
-                                {
-                                    continue;
-                                }
-                                else
+                                Log.LogInfo($"Card {card.GetAssetName()} has reached the maximum upgrade slots ({visibleUpgradeCount}/{maximumUpgradeCount}).");
+                                if (!___excludeFilteredOutCards)
                                 {
                                     card.CurrentDisabledReason = CardState.UpgradeDisabledReason.NoSlots;
+                                    __result.Add(card);
                                 }
+                                continue;
                             }
                         }
                     }
 
-                    // Skip adding card
-                    bool skip = false;
-
-                    // Check if card is eligible for upgrade based on upgrade mask data
+                    // If there are no filters, add card to the result
                     if (cardUpgradeMaskDatas.IsNullOrEmpty())
                     {
-                        Log.LogInfo("No card upgrade mask data found, skipping upgrade eligibility check.");
+                        __result.Add(card);
+                        continue;
                     }
-                    else
+
+                    bool addCardToResult = true;
+                    // Validate card for each filter
+                    foreach (CardUpgradeMaskData cardUpgradeMaskData in cardUpgradeMaskDatas)
                     {
-                        foreach (CardUpgradeMaskData cardUpgradeMaskData in cardUpgradeMaskDatas)
+                        Log.LogInfo($"Checking upgrade eligibility for card {card.GetAssetName()} with filter {cardUpgradeMaskData.GetName()}.");
+
+                        // Skip specific filters
+                        if (cardUpgradeMaskData.GetName() == "OnlyUnitExcludingChamps")
                         {
-                            // Skip if the mask data is not applicable
-                            if (cardUpgradeMaskData.GetName() == "ExcludeConsume" || cardUpgradeMaskData.GetName() == "OnlyEquipment_EquipmentMerge")
-                            {   
-                                Log.LogInfo($"Skipping {cardUpgradeMaskData.GetName()} card for upgrade eligibility check.");
-                                skip = true;
-                                break;
-                            }
+                            continue;
+                        }
+                        else if (cardUpgradeMaskData.GetName() == "OnlyEquipment" || cardUpgradeMaskData.GetName() == "OnlySpells")
+                        {
+                            addCardToResult = false;
+                            break;
+                        }
 
-                            if (cardUpgradeMaskData.GetName() == "OnlyUnitExcludingChamps")
+                        if (!cardUpgradeMaskData.FilterCard<CardState>(card, ___relicManager))
+                        {
+                            Log.LogInfo($"Card {card.GetAssetName()} is not eligible for upgrade due to reason: {cardUpgradeMaskData.GetUpgradeDisabledReason()}.");
+                            if (___excludeFilteredOutCards)
                             {
-                                Log.LogInfo($"Skipping OnlyUnitExcludingChamps card for upgrade eligibility check.");
-                                continue;
+                                addCardToResult = false;
                             }
-
-                            Log.LogInfo($"Checking upgrade eligibility for {card.GetAssetName()} with filter {cardUpgradeMaskData.GetName()}.");
-                            if (!cardUpgradeMaskData.FilterCard<CardState>(card, ___relicManager))
+                            else if (cardUpgradeMaskData.GetUpgradeDisabledReason() != CardState.UpgradeDisabledReason.NONE)
                             {
-                                Log.LogInfo($"Champion {card.GetAssetName()} is not eligible for upgrade due to reason: {cardUpgradeMaskData.GetUpgradeDisabledReason()}.");
-                                if (cardUpgradeMaskData.GetUpgradeDisabledReason() == CardState.UpgradeDisabledReason.NONE)
-                                {
-                                    // If the upgrade mask data has no disabled reason, we assume it's a special case that should be skipped
-                                    if (cardUpgradeMaskData.GetName() == "ExcludeQuick" || cardUpgradeMaskData.GetName() == "ExcludeEndless" || cardUpgradeMaskData.GetName() == "ExcludeSmallest"
-                                        || cardUpgradeMaskData.GetName() == "ExcludeTitanite" || cardUpgradeMaskData.GetName() == "ExcludeDualism" || cardUpgradeMaskData.GetName() == "ExcludeUnitsWithAbilities")
-                                    {
-                                        if (!card.IsCurrentlyDisabled())
-                                        {
-                                            Log.LogInfo($"Champion {card.GetAssetName()} is not eligible for upgrade due to special case: {cardUpgradeMaskData.GetName()}.");
-                                            card.CurrentDisabledReason = CardState.UpgradeDisabledReason.NotEligible;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        skip = true;
-                                        break;
-                                    }
-                                }
-                                else if (!card.IsCurrentlyDisabled())
-                                {
-                                    card.CurrentDisabledReason = cardUpgradeMaskData.GetUpgradeDisabledReason();
-                                }
+                                card.CurrentDisabledReason = cardUpgradeMaskData.GetUpgradeDisabledReason();
                             }
                             else
                             {
-                                Log.LogInfo($"Champion {card.GetAssetName()} passed upgrade filter {cardUpgradeMaskData.GetName()}.");
+                                card.CurrentDisabledReason = CardState.UpgradeDisabledReason.NotEligible;
                             }
+                            break;
                         }
                     }
-
-                    if (!skip)
+                    if (addCardToResult)
                     {
-                        Log.LogInfo($"Added {card.GetAssetName()} to upgrade list.");
                         __result.Add(card);
                     }
                 }
