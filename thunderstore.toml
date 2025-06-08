@@ -4,7 +4,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "GravitonGamer"
 name = "Upgrade_Champions_2"
-versionNumber = "1.0.2"
+versionNumber = "1.0.3"
 description = "A mod for Monster Train 2 that lets you upgrade champion cards just like other unit cards."
 websiteUrl = "https://github.com/Jace17/UpgradeChampions2"
 containsNsfwContent = false
