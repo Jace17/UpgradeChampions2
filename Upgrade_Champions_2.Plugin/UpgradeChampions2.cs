@@ -10,7 +10,7 @@ namespace UpgradeChampions2
     {
         public const string pluginGuid = "com.jacelendro.upgradechampions2";
         public const string pluginName = "Upgrade Champions 2";
-        public const string pluginVersion = "1.0";
+        public const string pluginVersion = "1.1.0";
 
         public void Awake()
         {
