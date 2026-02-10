@@ -15,7 +15,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
-    <PackageReference Include="TrainworksReloaded.Base" Version="0.6.1" />
+    <PackageReference Include="TrainworksReloaded.Base" Version="0.7.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,7 +27,7 @@
     </None>
   </ItemGroup>
 
-	<!-- <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(ProjectDir)bin\Debug\netstandard2.1\*.*&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\Monster Train 2\BepInEx\plugins\UpgradeChampions2&quot; /Y /I /E" />
-  </Target> -->
+  <!--<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(ProjectDir)bin\Debug\netstandard2.1\*.*&quot; &quot;C:\Users\jacel\AppData\Roaming\r2modmanPlus-local\MonsterTrain2\profiles\Default\BepInEx\plugins\GravitonGamer-Upgrade_Champions_2&quot; /Y /I /E" />
+  </Target>-->
 </Project>
