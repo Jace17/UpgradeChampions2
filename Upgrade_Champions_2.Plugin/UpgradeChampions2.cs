@@ -137,7 +137,7 @@ namespace UpgradeChampions2
                     card.CurrentDisabledReason = CardState.UpgradeDisabledReason.NONE;
 
                     // Check if card is eligible for upgrade based on upgrade slots
-                    if (!___ignoreUpgradeLimit && ___rewardSource != GrantableRewardData.Source.Event)
+                    if (!___ignoreUpgradeLimit && ___rewardSource != GrantableRewardData.Source.Event && ___mode != DeckScreen.Mode.SpellMergeSelection)
                     {
                         using (GenericPools.GetList<IModifyCardUpgradeSlotCountRelicEffect>(out List<IModifyCardUpgradeSlotCountRelicEffect> relicEffects))
                         {
