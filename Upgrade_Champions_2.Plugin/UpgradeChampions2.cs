@@ -26,7 +26,8 @@ namespace UpgradeChampions2
     {
         public static readonly ManualLogSource Log = BepInEx.Logging.Logger.CreateLogSource("AddChampionCardsToUpgradeList");
         public static void Postfix(SaveManager ___saveManager, DeckScreen.Mode ___mode, RelicEffectData ___relicEffectData, object ___cardUpgradesToApply, CardUpgradeMaskData ___cardUpgradeMaskData, List<CardState> __result,
-             CardState ___forceExcludeCard, CardType ___cardTypeFilter, bool ___ignoreUpgradeLimit, GrantableRewardData.Source ___rewardSource, RelicManager ___relicManager, bool ___excludeFilteredOutCards)
+             CardState ___forceExcludeCard, CardType ___cardTypeFilter, bool ___ignoreUpgradeLimit, GrantableRewardData.Source ___rewardSource, RelicManager ___relicManager, bool ___excludeFilteredOutCards, 
+             DeckScreen.UpgradeType ___considerUpgradeType)
         {
             if (___mode == DeckScreen.Mode.ApplyUpgrade || ___mode == DeckScreen.Mode.SpellMergeSelection)
             {
@@ -141,8 +142,16 @@ namespace UpgradeChampions2
                     {
                         using (GenericPools.GetList<IModifyCardUpgradeSlotCountRelicEffect>(out List<IModifyCardUpgradeSlotCountRelicEffect> relicEffects))
                         {
-                            int visibleUpgradeCount = card.GetVisibleUpgradeCount();
-                            int maximumUpgradeCount = ___saveManager.GetBalanceData().GetUpgradeSlots(card, (___relicManager != null) ? ___relicManager.GetRelicEffects<IModifyCardUpgradeSlotCountRelicEffect>(relicEffects) : null, ___relicManager);
+                            int visibleUpgradeCount = card.GetVisibleUpgradeCount(___considerUpgradeType == DeckScreen.UpgradeType.Default, ___considerUpgradeType == DeckScreen.UpgradeType.RegionRun);
+                            int maximumUpgradeCount;
+                            if (___considerUpgradeType != DeckScreen.UpgradeType.Default)
+                            {
+                                maximumUpgradeCount = 1;
+                            }
+                            else
+                            {
+                                maximumUpgradeCount = ___saveManager.GetBalanceData().GetUpgradeSlots(card, (___relicManager != null) ? ___relicManager.GetRelicEffects<IModifyCardUpgradeSlotCountRelicEffect>(relicEffects) : null, ___relicManager);
+                            }
                             if (visibleUpgradeCount >= maximumUpgradeCount)
                             {
                                 Log.LogInfo($"Card {card.GetAssetName()} has reached the maximum upgrade slots ({visibleUpgradeCount}/{maximumUpgradeCount}).");
