@@ -47,7 +47,7 @@ namespace UpgradeChampions2
                 }
 
                 // Filter by relic effect
-                if (___relicEffectData != null)
+                if (___relicEffectData != null && ___mode != DeckScreen.Mode.SpellMergeSelection)
                 {
                     Log.LogInfo($"Filtering by relic effect data...");
                     if (___relicEffectData.GetParamCardType() != CardType.Invalid)
